@@ -73,19 +73,29 @@ export const getAllTour = async (req, res) => {
 
 // Get tour by search
 export const getTourBySearch = async (req, res) => {
-
-   // hear 'i' means case sensitive 
-   const city = new RegExp(req.query.city, 'i')
-   const distance = parseInt(req.query.distance)
-   const maxGroupSize = parseInt(req.query.maxGroupSize)
-
+   const city = req.query.city ? new RegExp(req.query.city, 'i') : /.*/
+   const distance = Number(req.query.distance) || 0
+   const maxGroupSize = Number(req.query.maxGroupSize) || 1
+   const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : Infinity
    try {
-      // gte means greater than equal
-      const tours = await Tour.find({ city, distance: { $gte: distance }, maxGroupSize: { $gte: maxGroupSize } }).populate('reviews')
+      const tours = await Tour.find({
+         city,
+         distance: { $gte: distance },
+         maxGroupSize: { $gte: maxGroupSize },
+         price: { $lte: maxPrice }
+      }).populate('reviews')
 
-      res.status(200).json({ success: true, message: 'Successfully', data: tours })
+      res.status(200).json({
+         success: true,
+         count: tours.length,
+         message: 'Successfully',
+         data: tours
+      })
    } catch (error) {
-      res.status(404).json({ success: false, message: 'Not Found' })
+      res.status(500).json({
+         success: false,
+         message: 'Failed to fetch tours'
+      })
    }
 }
 
